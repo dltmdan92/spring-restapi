@@ -1,6 +1,7 @@
 package com.seungmoo.springrestapi.events;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.seungmoo.springrestapi.common.TestDescription;
 import org.hamcrest.Matchers;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -41,6 +42,7 @@ public class EventControllerTestNonSlicing {
      * @throws Exception
      */
     @Test
+    @TestDescription("정상적으로 이벤트를 생성하는 테스트")
     public void createEvent() throws Exception {
         Event event = Event.builder()
                 .id(100)
@@ -81,6 +83,7 @@ public class EventControllerTestNonSlicing {
      * @throws Exception
      */
     @Test
+    @TestDescription("입력받을 수 없는 값이 파라미터로 들어온 경우에 에러가 발생")
     public void makeError() throws Exception {
         Event event = Event.builder()
                 .id(100)
@@ -109,6 +112,7 @@ public class EventControllerTestNonSlicing {
     }
 
     @Test
+    @TestDescription("입력 값이 비어 있는 경우에 에러가 발생")
     public void createEvent_Bad_Req_Empty_input() throws Exception {
         EventDto eventDto = EventDto.builder().build();
 
@@ -127,6 +131,7 @@ public class EventControllerTestNonSlicing {
      * @throws Exception
      */
     @Test
+    @TestDescription("입력 값이 잘못된 경우(규칙 위반) 에러가 발생하는 테스트")
     public void createEvent_Bad_Req_Wrong_input() throws Exception {
         EventDto eventDto = EventDto.builder()
                 .name("Spring")

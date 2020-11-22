@@ -65,6 +65,7 @@ public class EventController {
             return ResponseEntity.badRequest().build();
         }
 
+
         // EventDto 객체를 --> Event 객체로 옮겨보자 (ModelMapper를 통해 편하게 사용)
         Event event = modelMapper.map(eventDto, Event.class);
 
