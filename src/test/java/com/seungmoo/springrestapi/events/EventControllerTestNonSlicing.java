@@ -117,4 +117,33 @@ public class EventControllerTestNonSlicing {
                     .content(this.objectMapper.writeValueAsString(eventDto)))
                 .andExpect(status().isBadRequest());
     }
+
+
+    /**
+     * 파라미터의 값들이 이상한 경우
+     * 1. 시작일자 > 종료일자
+     * 2. basePrice > maxPrice
+     * 일 때 어떻게 할까??
+     * @throws Exception
+     */
+    @Test
+    public void createEvent_Bad_Req_Wrong_input() throws Exception {
+        EventDto eventDto = EventDto.builder()
+                .name("Spring")
+                .description("REST API Development with Spring")
+                .beginEnrollmentDateTime(LocalDateTime.of(2020, 11, 26, 14, 46, 0))
+                .closeEnrollmentDateTime(LocalDateTime.of(2020, 11, 22, 15, 0, 0))
+                .beginEventDateTime(LocalDateTime.of(2020, 11, 27, 14, 0, 0))
+                .endEventDateTime(LocalDateTime.of(2020, 11, 24, 15, 0, 0))
+                .basePrice(10000)
+                .maxPrice(200)
+                .limitOfEnrollment(100)
+                .location("강남역 D2 스타트업 팩토리")
+                .build();
+
+        this.mockMvc.perform(post("/api/events")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(this.objectMapper.writeValueAsString(eventDto)))
+                .andExpect(status().isBadRequest());
+    }
 }

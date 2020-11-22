@@ -20,14 +20,18 @@ public class EventController {
 
     private final EventRepository eventRepository;
     private final ModelMapper modelMapper;
+    private final EventValidator eventValidator;
+
     /**
      * 생성자 주입 방식
      * 생성자에 들어오는 파리미터가 Bean으로 등록되어 있으면, @Autowired 생략 가능하다.
      * @param eventRepository
+     * @param eventValidator
      */
-    public EventController(EventRepository eventRepository, ModelMapper modelMapper) {
+    public EventController(EventRepository eventRepository, ModelMapper modelMapper, EventValidator eventValidator) {
         this.eventRepository = eventRepository;
         this.modelMapper = modelMapper;
+        this.eventValidator = eventValidator;
     }
 
     /**
@@ -45,7 +49,7 @@ public class EventController {
      * <unknown 입력 값 있을 시 Bad Request 발생>
      *     1. API RequestParameter에 @Valid 선언해주기 --> spring-boot-starter-validation을 꼭 pom.xml에 선언해준다.
      *          Valid의 수행결과는 바로 옆에 선언된 Errors 파라미터에 포워딩 된다.
-     *     2. 
+     *     2.
      *
      * @return
      */
@@ -55,6 +59,12 @@ public class EventController {
         if (errors.hasErrors()) {
             return ResponseEntity.badRequest().build();
         }
+
+        eventValidator.validate(eventDto, errors);
+        if (errors.hasErrors()) {
+            return ResponseEntity.badRequest().build();
+        }
+
         // EventDto 객체를 --> Event 객체로 옮겨보자 (ModelMapper를 통해 편하게 사용)
         Event event = modelMapper.map(eventDto, Event.class);
 
