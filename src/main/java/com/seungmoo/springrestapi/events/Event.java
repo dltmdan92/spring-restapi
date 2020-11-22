@@ -2,6 +2,7 @@ package com.seungmoo.springrestapi.events;
 
 import lombok.*;
 
+import javax.persistence.*;
 import java.time.LocalDateTime;
 
 /**
@@ -10,6 +11,7 @@ import java.time.LocalDateTime;
  * 롬복 애노테이션은 스프링 애노테이션 처럼 커스텀 애노테이션으로 묶음 처리 불가함.
  * 애노테이션 적어줘야 함.
  */
+@Entity
 @Getter @Setter // Getter, Setter 메소드 생성 해줌
 @Builder // builder를 선언하고 컴파일 하면 여러 메서드가 자동 생성된다. (소스 참고)
 @AllArgsConstructor @NoArgsConstructor // 생성자 생성 해줌
@@ -18,6 +20,8 @@ import java.time.LocalDateTime;
 // 아래와 같이 EqualsAndHashCode는 id만 갖고 구현되게 하는게 좋다.
 @EqualsAndHashCode(of = "id")
 public class Event {
+    @Id
+    @GeneratedValue
     private Integer id;
     private String name;
     private String description;
@@ -31,5 +35,7 @@ public class Event {
     private int limitOfEnrollment;
     private boolean offline;
     private boolean free;
+
+    @Enumerated(EnumType.STRING) // EnumType은 String으로 해줘야 한다. (Ordinal은 순서로 저장 --> 위험!)
     private EventStatus eventStatus;
 }
