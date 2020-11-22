@@ -57,18 +57,17 @@ public class EventController {
     public ResponseEntity<?> createEvent(@RequestBody @Valid EventDto eventDto, Errors errors) {
         // @Valid에서 발생한 Error의 결과가 Errors로 넘겨진다.
         if (errors.hasErrors()) {
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().body(errors); // 오류 발생에 대한 content 본문을 body에 넣어서 보내주자.
         }
 
         eventValidator.validate(eventDto, errors);
         if (errors.hasErrors()) {
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().body(errors);
         }
-
 
         // EventDto 객체를 --> Event 객체로 옮겨보자 (ModelMapper를 통해 편하게 사용)
         Event event = modelMapper.map(eventDto, Event.class);
-
+        event.update(); // 유/무료 갱신, 원래는 Service 쪽으로 로직 위임하는게 좋다.
         Event newEvent = this.eventRepository.save(event);
         URI createdUri = linkTo(EventController.class).slash(newEvent.getId()).toUri();
         return ResponseEntity.created(createdUri).body(event);

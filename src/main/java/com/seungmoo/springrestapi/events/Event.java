@@ -38,4 +38,21 @@ public class Event {
 
     @Enumerated(EnumType.STRING) // EnumType은 String으로 해줘야 한다. (Ordinal은 순서로 저장 --> 위험!)
     private EventStatus eventStatus = EventStatus.DRAFT; // 기본값은 DRAFT로 설정
+
+    public void update() {
+        // Update free
+        if (this.basePrice == 0 && this.maxPrice == 0) {
+            this.free = true;
+        } else {
+            this.free = false;
+        }
+        // Update offline
+        // isBlank - Java 11 버전에서 추가 되었음 (이전에는 String을 trim한 후에 isEmpty로 확인했었음)
+        // isBlank : 문자열 체크 (공백문자열 까지 체크)
+        if (this.location == null || this.location.isBlank()) {
+            this.offline = false;
+        } else {
+            this.offline = true;
+        }
+    }
 }

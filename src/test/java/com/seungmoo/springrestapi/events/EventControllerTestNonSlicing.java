@@ -18,6 +18,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -44,35 +45,32 @@ public class EventControllerTestNonSlicing {
     @Test
     @TestDescription("정상적으로 이벤트를 생성하는 테스트")
     public void createEvent() throws Exception {
-        Event event = Event.builder()
-                .id(100)
+        EventDto event = EventDto.builder()
                 .name("Spring")
                 .description("REST API Development with Spring")
                 .beginEnrollmentDateTime(LocalDateTime.of(2020, 11, 22, 14, 46, 0))
                 .closeEnrollmentDateTime(LocalDateTime.of(2020, 11, 22, 15, 0, 0))
                 .beginEventDateTime(LocalDateTime.of(2020, 11, 25, 14, 0, 0))
-                .endEventDateTime(LocalDateTime.of(2020, 11, 24, 15, 0, 0))
+                .endEventDateTime(LocalDateTime.of(2020, 11, 30, 15, 0, 0))
                 .basePrice(100)
                 .maxPrice(200)
                 .limitOfEnrollment(100)
-                .location("강남역 D2 스타트업 팩토리")
-                .free(true)
-                .offline(false)
-                .eventStatus(EventStatus.PUBLISHED)
                 .build();
 
-        mockMvc.perform(post("/api/events")
+        mockMvc.perform(post("/api/events/")
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaTypes.HAL_JSON) // HyperText Application Language (HATEOAS, 링크 정의)
                 .content(objectMapper.writeValueAsString(event)) // event 요 객체를 문자열로 바꿔서 body에 넣어준다.
                 )
                 .andDo(print())
+
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("id").exists())
                 .andExpect(header().exists(HttpHeaders.LOCATION))
                 .andExpect(header().string(HttpHeaders.CONTENT_TYPE, MediaTypes.HAL_JSON_VALUE))
                 .andExpect(jsonPath("id").value(Matchers.not(100)))
-                .andExpect(jsonPath("free").value(Matchers.not(true)))
+                .andExpect(jsonPath("free").value(false))
+                .andExpect(jsonPath("offline").value(false))
                 .andExpect(jsonPath("eventStatus").value(EventStatus.DRAFT.toString()));
 
     }
@@ -92,7 +90,7 @@ public class EventControllerTestNonSlicing {
                 .beginEnrollmentDateTime(LocalDateTime.of(2020, 11, 22, 14, 46, 0))
                 .closeEnrollmentDateTime(LocalDateTime.of(2020, 11, 22, 15, 0, 0))
                 .beginEventDateTime(LocalDateTime.of(2020, 11, 25, 14, 0, 0))
-                .endEventDateTime(LocalDateTime.of(2020, 11, 24, 15, 0, 0))
+                .endEventDateTime(LocalDateTime.of(2020, 11, 30, 15, 0, 0))
                 .basePrice(100)
                 .maxPrice(200)
                 .limitOfEnrollment(100)
@@ -137,8 +135,10 @@ public class EventControllerTestNonSlicing {
                 .name("Spring")
                 .description("REST API Development with Spring")
                 .beginEnrollmentDateTime(LocalDateTime.of(2020, 11, 26, 14, 46, 0))
+                // closeEnrollmentDateTime이 beginEnrollmentDateTime보다 빠름
                 .closeEnrollmentDateTime(LocalDateTime.of(2020, 11, 22, 15, 0, 0))
                 .beginEventDateTime(LocalDateTime.of(2020, 11, 27, 14, 0, 0))
+                // endEventDateTime이 beginEventDateTime보다 빠름
                 .endEventDateTime(LocalDateTime.of(2020, 11, 24, 15, 0, 0))
                 .basePrice(10000)
                 .maxPrice(200)
@@ -149,6 +149,13 @@ public class EventControllerTestNonSlicing {
         this.mockMvc.perform(post("/api/events")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(this.objectMapper.writeValueAsString(eventDto)))
-                .andExpect(status().isBadRequest());
+                .andDo(print())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$[0].objectName").exists())
+                .andExpect(jsonPath("$[0].field").exists())
+                .andExpect(jsonPath("$[0].defaultMessage").exists())
+                .andExpect(jsonPath("$[0].code").exists())
+                .andExpect(jsonPath("$[0].rejectedValue").exists());
     }
+
 }
