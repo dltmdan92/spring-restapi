@@ -37,5 +37,5 @@ public class Event {
     private boolean free;
 
     @Enumerated(EnumType.STRING) // EnumType은 String으로 해줘야 한다. (Ordinal은 순서로 저장 --> 위험!)
-    private EventStatus eventStatus;
+    private EventStatus eventStatus = EventStatus.DRAFT; // 기본값은 DRAFT로 설정
 }
