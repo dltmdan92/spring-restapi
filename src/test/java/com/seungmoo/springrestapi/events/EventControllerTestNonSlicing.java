@@ -1,15 +1,18 @@
 package com.seungmoo.springrestapi.events;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.seungmoo.springrestapi.common.RestDocsConfiguration;
 import com.seungmoo.springrestapi.common.TestDescription;
 import org.hamcrest.Matchers;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDocs;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.hateoas.MediaTypes;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -19,6 +22,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.time.LocalDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -27,6 +31,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @RunWith(SpringRunner.class)
 @SpringBootTest // 오히려 SlicingTest가 Mocking해야 되는게 많아서 더 불편할 수 있다.
 @AutoConfigureMockMvc
+@AutoConfigureRestDocs // spring REST DOCS를 적용
+@Import(RestDocsConfiguration.class) // 별도로 셋팅한 Bean 설정을 Import 하는 방법
 public class EventControllerTestNonSlicing {
     @Autowired
     MockMvc mockMvc; // Mocking된 DispatcherServlet으로 테스트를 수행한다. 진짜 DispatcherServlet을 띄우는 것보단 가볍다.
@@ -75,7 +81,9 @@ public class EventControllerTestNonSlicing {
                 // Spring HATEOAS를 통해 CLient는 링크 정보를 받고, Link를 통해 다른 Status로 전이할 수 있다.
                 .andExpect(jsonPath("_links.self").exists())
                 .andExpect(jsonPath("_links.query-events").exists())
-                .andExpect(jsonPath("_links.update-event").exists());
+                .andExpect(jsonPath("_links.update-event").exists())
+                // SPRING REST DOCS를 통해 snippet 생성해보자   target/generated-snippets/
+                .andDo(document("create-event")); //(target/generated-snippets/create-event 에 snippet 생성)
 
     }
 

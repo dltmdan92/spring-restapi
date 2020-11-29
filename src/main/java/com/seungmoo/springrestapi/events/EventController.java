@@ -75,7 +75,7 @@ public class EventController {
         WebMvcLinkBuilder selfLinkBuilder =  linkTo(EventController.class).slash(newEvent.getId());
         URI createdUri = linkTo(EventController.class).slash(newEvent.getId()).toUri();
 
-        // HATEOAS link를 만들어 보자
+        // HATEOAS link를 만들어 보자    Spring Boot 에서 기본적으로 제공하는 기능 덕분에 HATEOAS 편하게 사용가능함.
         // ResourceSupport, Resource 등 백기선 강의에서 쓰던 것들이 deprecated 되었음
         // 현재는 ResourceSupport --> RepresentationModel
         // Resource --> EntityModel 이렇게 바뀜
