@@ -1,7 +1,10 @@
 package com.seungmoo.springrestapi.events;
 
 import org.modelmapper.ModelMapper;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.MediaTypes;
+import org.springframework.hateoas.server.mvc.ControllerLinkBuilder;
+import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.validation.Errors;
@@ -69,8 +72,20 @@ public class EventController {
         Event event = modelMapper.map(eventDto, Event.class);
         event.update(); // 유/무료 갱신, 원래는 Service 쪽으로 로직 위임하는게 좋다.
         Event newEvent = this.eventRepository.save(event);
+        WebMvcLinkBuilder selfLinkBuilder =  linkTo(EventController.class).slash(newEvent.getId());
         URI createdUri = linkTo(EventController.class).slash(newEvent.getId()).toUri();
-        return ResponseEntity.created(createdUri).body(event);
+
+        // HATEOAS link를 만들어 보자
+        // ResourceSupport, Resource 등 백기선 강의에서 쓰던 것들이 deprecated 되었음
+        // 현재는 ResourceSupport --> RepresentationModel
+        // Resource --> EntityModel 이렇게 바뀜
+        EntityModel<Event> eventEntityModel = EntityModel.of(event);
+        eventEntityModel.add(linkTo(EventController.class).slash(event.getId()).withSelfRel());
+        eventEntityModel.add(linkTo(EventController.class).withRel("query-events"));
+        eventEntityModel.add(selfLinkBuilder.withRel("update-event"));
+
+        // 이렇게 하면 hal+json Content-Type 포맷으로 링크 정보들이 json에 출력된다. (_links)
+        return ResponseEntity.created(createdUri).body(eventEntityModel);
     }
 
 }

@@ -21,7 +21,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 
-@WebMvcTest // Web용 Slicing Test
+@WebMvcTest // Web용 Slicing Test // EventControllerTestNonSlicing에서 수행할 것
 public class EventControllerTest {
 
     @Autowired

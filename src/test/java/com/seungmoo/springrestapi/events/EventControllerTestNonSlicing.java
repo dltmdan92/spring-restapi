@@ -71,7 +71,11 @@ public class EventControllerTestNonSlicing {
                 .andExpect(jsonPath("id").value(Matchers.not(100)))
                 .andExpect(jsonPath("free").value(false))
                 .andExpect(jsonPath("offline").value(false))
-                .andExpect(jsonPath("eventStatus").value(EventStatus.DRAFT.toString()));
+                .andExpect(jsonPath("eventStatus").value(EventStatus.DRAFT.toString()))
+                // Spring HATEOAS를 통해 CLient는 링크 정보를 받고, Link를 통해 다른 Status로 전이할 수 있다.
+                .andExpect(jsonPath("_links.self").exists())
+                .andExpect(jsonPath("_links.query-events").exists())
+                .andExpect(jsonPath("_links.update-event").exists());
 
     }
 
