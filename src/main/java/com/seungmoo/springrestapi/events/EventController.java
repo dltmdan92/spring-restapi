@@ -2,14 +2,19 @@ package com.seungmoo.springrestapi.events;
 
 import com.seungmoo.springrestapi.index.IndexController;
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PagedResourcesAssembler;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.Link;
 import org.springframework.hateoas.MediaTypes;
+import org.springframework.hateoas.PagedModel;
 import org.springframework.hateoas.server.mvc.ControllerLinkBuilder;
 import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.validation.Errors;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -106,6 +111,23 @@ public class EventController {
 
         // 이렇게 하면 hal+json Content-Type 포맷으로 링크 정보들이 json에 출력된다. (_links)
         return ResponseEntity.created(createdUri).body(eventEntityModel);
+    }
+
+    /**
+     * list를 리턴할 때  Page 정보, 링크 정보를 같이 리턴한다.
+     * @param pageable
+     * @param assembler
+     * @return
+     */
+    @GetMapping
+    public ResponseEntity<?> queryEvents(Pageable pageable, PagedResourcesAssembler<Event> assembler) {
+        // 페이징 처리
+        Page<Event> page = this.eventRepository.findAll(pageable);
+        PagedModel<EntityModel<Event>> model = assembler.toModel(page,
+                // list에서 각각의 event에 대한 self _link도 추가한다.
+                e -> EntityModel.of(e).add(linkTo(EventController.class).slash(e.getId()).withSelfRel()));
+        model.add(Link.of("/docs/index.html#resources-events-list").withRel("profile"));
+        return ResponseEntity.ok(model);
     }
 
 }
