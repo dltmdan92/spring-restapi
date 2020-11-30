@@ -1,5 +1,6 @@
 package com.seungmoo.springrestapi.events;
 
+import com.seungmoo.springrestapi.accounts.Account;
 import lombok.*;
 import org.springframework.hateoas.RepresentationModel;
 
@@ -39,6 +40,9 @@ public class Event {
 
     @Enumerated(EnumType.STRING) // EnumType은 String으로 해줘야 한다. (Ordinal은 순서로 저장 --> 위험!)
     private EventStatus eventStatus = EventStatus.DRAFT; // 기본값은 DRAFT로 설정
+
+    @ManyToOne
+    private Account manager;
 
     public void update() {
         // Update free
