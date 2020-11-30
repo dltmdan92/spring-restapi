@@ -5,10 +5,12 @@ import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.springframework.test.context.ActiveProfiles;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @RunWith(JUnitParamsRunner.class)
+@ActiveProfiles("test") // profile 설정을 통해, application-test.properties 파일을 사용할 수 있다.
 public class EventTest {
 
     @Test

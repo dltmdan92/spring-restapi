@@ -16,13 +16,18 @@ import org.springframework.context.annotation.Import;
 import org.springframework.hateoas.MediaTypes;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.restdocs.headers.HeaderDocumentation.*;
+import static org.springframework.restdocs.hypermedia.HypermediaDocumentation.linkWithRel;
+import static org.springframework.restdocs.hypermedia.HypermediaDocumentation.links;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
+import static org.springframework.restdocs.payload.PayloadDocumentation.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -33,6 +38,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @AutoConfigureRestDocs // spring REST DOCS를 적용
 @Import(RestDocsConfiguration.class) // 별도로 셋팅한 Bean 설정을 Import 하는 방법
+@ActiveProfiles("test") // profile 설정을 통해, application-test.properties 파일을 사용할 수 있다.
 public class EventControllerTestNonSlicing {
     @Autowired
     MockMvc mockMvc; // Mocking된 DispatcherServlet으로 테스트를 수행한다. 진짜 DispatcherServlet을 띄우는 것보단 가볍다.
@@ -82,8 +88,64 @@ public class EventControllerTestNonSlicing {
                 .andExpect(jsonPath("_links.self").exists())
                 .andExpect(jsonPath("_links.query-events").exists())
                 .andExpect(jsonPath("_links.update-event").exists())
+                // SPRING REST DOCS --> API 문서화
                 // SPRING REST DOCS를 통해 snippet 생성해보자   target/generated-snippets/
-                .andDo(document("create-event")); //(target/generated-snippets/create-event 에 snippet 생성)
+                //(target/generated-snippets/create-event 에 snippet 생성)
+                .andDo(document("create-event",
+                        links( // target/generated-snippets/create-event에 links라는 문서조각 생성
+                                linkWithRel("self").description("link to self"),
+                                linkWithRel("query-events").description("link to query events"),
+                                linkWithRel("update-event").description("link to update an existing event"),
+                                linkWithRel("profile").description("link to profile")
+                        ),
+                        requestHeaders(
+                                headerWithName(HttpHeaders.ACCEPT).description("accept header"),
+                                headerWithName(HttpHeaders.CONTENT_TYPE).description("content type")
+                        ),
+                        requestFields(
+                                fieldWithPath("name").description("Name of new event"),
+                                fieldWithPath("description").description("description of new event"),
+                                fieldWithPath("beginEnrollmentDateTime").description("date time of begin of new event"),
+                                fieldWithPath("closeEnrollmentDateTime").description("date time of close of enrollment"),
+                                fieldWithPath("beginEventDateTime").description("date time of close of enrollment"),
+                                fieldWithPath("endEventDateTime").description("date time of end of new event"),
+                                fieldWithPath("location").description("location of new event"),
+                                fieldWithPath("basePrice").description("base price of new event"),
+                                fieldWithPath("maxPrice").description("max price of new event"),
+                                fieldWithPath("limitOfEnrollment").description("limit of enrollment")
+                        ),
+                        responseHeaders(
+                                headerWithName(HttpHeaders.LOCATION).description("location header"),
+                                headerWithName(HttpHeaders.CONTENT_TYPE).description("content type is hal+json type")
+                        ),
+                        responseFields(
+                                // relaxedResponseFields : relaxed prefix를 붙여서 응답의 일부분만 문서화 한다.
+                                // 그냥 responseField를 쓰면 payload의 모든 부분을 문서화 하려고 함
+                                // 문서화 파일 형식 : adoc 파일 (ascii doctor)
+                                // relaxed의 단점은 정확한 문서화를 만들지 못한다는 점
+                                // 위쪽에서 이미 documentation 했던 _links 들이 빠져 있으면 responseFields는 error를 발생한다.
+                                // relaxedResponseFields로 사용하거나 OR responseFields를 쓰고 fieldWithPath()로 _links.self.href 등을 선언해준다.
+                                // 가급적 relaxed 보다는 그냥 responseFields 쓰는게 좋다. (API 변경되었을 때 감지하기 위해..)
+                                fieldWithPath("id").description("identifier of new event"),
+                                fieldWithPath("name").description("Name of new event"),
+                                fieldWithPath("description").description("description of new event"),
+                                fieldWithPath("beginEnrollmentDateTime").description("date time of begin of new event"),
+                                fieldWithPath("closeEnrollmentDateTime").description("date time of close of enrollment"),
+                                fieldWithPath("beginEventDateTime").description("date time of close of enrollment"),
+                                fieldWithPath("endEventDateTime").description("date time of end of new event"),
+                                fieldWithPath("location").description("location of new event"),
+                                fieldWithPath("basePrice").description("base price of new event"),
+                                fieldWithPath("maxPrice").description("max price of new event"),
+                                fieldWithPath("limitOfEnrollment").description("limit of enrollment"),
+                                fieldWithPath("free").description("it tells this event is free or not"),
+                                fieldWithPath("offline").description("it tells this event is offline event or not"),
+                                fieldWithPath("eventStatus").description("eventStatus"),
+                                fieldWithPath("_links.self.href").description("link to self"),
+                                fieldWithPath("_links.query-events.href").description("link to query events"),
+                                fieldWithPath("_links.update-event.href").description("link to update event"),
+                                fieldWithPath("_links.profile.href").description("link to profile")
+                        )
+                ));
 
     }
 

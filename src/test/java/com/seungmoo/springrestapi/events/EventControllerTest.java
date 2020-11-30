@@ -11,6 +11,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.hateoas.MediaTypes;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -22,6 +23,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 
 @WebMvcTest // Web용 Slicing Test // EventControllerTestNonSlicing에서 수행할 것
+@ActiveProfiles("test") // profile 설정을 통해, application-test.properties 파일을 사용할 수 있다.
 public class EventControllerTest {
 
     @Autowired

@@ -2,6 +2,7 @@ package com.seungmoo.springrestapi.events;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.Link;
 import org.springframework.hateoas.MediaTypes;
 import org.springframework.hateoas.server.mvc.ControllerLinkBuilder;
 import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
@@ -83,6 +84,7 @@ public class EventController {
         eventEntityModel.add(linkTo(EventController.class).slash(event.getId()).withSelfRel());
         eventEntityModel.add(linkTo(EventController.class).withRel("query-events"));
         eventEntityModel.add(selfLinkBuilder.withRel("update-event"));
+        eventEntityModel.add(Link.of("/docs/index.html#resources-event-create").withRel("profile"));
 
         // 이렇게 하면 hal+json Content-Type 포맷으로 링크 정보들이 json에 출력된다. (_links)
         return ResponseEntity.created(createdUri).body(eventEntityModel);
