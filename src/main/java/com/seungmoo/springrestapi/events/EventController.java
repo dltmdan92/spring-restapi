@@ -1,5 +1,6 @@
 package com.seungmoo.springrestapi.events;
 
+import com.seungmoo.springrestapi.index.IndexController;
 import org.modelmapper.ModelMapper;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.Link;
@@ -15,8 +16,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 
 import javax.validation.Valid;
 import java.net.URI;
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
+import static org.springframework.http.ResponseEntity.badRequest;
 
 @Controller
 @RequestMapping(value = "/api/events", produces = MediaTypes.HAL_JSON_VALUE)
@@ -59,14 +64,27 @@ public class EventController {
      */
     @PostMapping
     public ResponseEntity<?> createEvent(@RequestBody @Valid EventDto eventDto, Errors errors) {
+
+        EntityModel<Errors> errorsEntityModel = EntityModel.of(errors, linkTo(methodOn(IndexController.class).index()).withRel("index"));
+        // ResponseEntity.body 쪽에서 errorsEntityModel을 못받아 주고 있음... 어쩔 수 없이 HashMap으로 만들어서 넣어주자.
+        Map<String, Object> errorsEntityModelMap = new HashMap<>();
+        errorsEntityModelMap.put("content", errorsEntityModel.getContent());
+        errorsEntityModelMap.put("_links", errorsEntityModel.getLinks());
+
         // @Valid에서 발생한 Error의 결과가 Errors로 넘겨진다.
         if (errors.hasErrors()) {
-            return ResponseEntity.badRequest().body(errors); // 오류 발생에 대한 content 본문을 body에 넣어서 보내주자.
+            System.out.println("error1");
+            // badRequest를 만들어 보낼 때 Errors를 받아서 본문에 넣어준다.
+            // Errors를 본문에 넣어줄 때, index에 대한 link를 받아서 넣어준다.
+            return ResponseEntity.badRequest().body(errorsEntityModelMap); // 오류 발생에 대한 content 본문을 body에 넣어서 보내주자.
         }
 
         eventValidator.validate(eventDto, errors);
         if (errors.hasErrors()) {
-            return ResponseEntity.badRequest().body(errors);
+            System.out.println("error2");
+            // badRequest를 만들어 보낼 때 Errors를 받아서 본문에 넣어준다.
+            // Errors를 본문에 넣어줄 때, index에 대한 link를 받아서 넣어준다.
+            return ResponseEntity.badRequest().body(errorsEntityModelMap);
         }
 
         // EventDto 객체를 --> Event 객체로 옮겨보자 (ModelMapper를 통해 편하게 사용)
