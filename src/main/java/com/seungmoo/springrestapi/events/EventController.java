@@ -1,6 +1,7 @@
 package com.seungmoo.springrestapi.events;
 
 import com.seungmoo.springrestapi.index.IndexController;
+import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -26,6 +27,7 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 @Controller
 @RequestMapping(value = "/api/events", produces = MediaTypes.HAL_JSON_VALUE)
+@RequiredArgsConstructor
 public class EventController {
 
     private final EventRepository eventRepository;
@@ -38,11 +40,12 @@ public class EventController {
      * @param eventRepository
      * @param eventValidator
      */
+    /*
     public EventController(EventRepository eventRepository, ModelMapper modelMapper, EventValidator eventValidator) {
         this.eventRepository = eventRepository;
         this.modelMapper = modelMapper;
         this.eventValidator = eventValidator;
-    }
+    }*/
 
     /**
      * URI 를 생성하고 201 Response를 리턴하는 핸들러 메소드

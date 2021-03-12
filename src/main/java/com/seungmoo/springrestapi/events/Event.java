@@ -41,6 +41,7 @@ public class Event {
     @Enumerated(EnumType.STRING) // EnumType은 String으로 해줘야 한다. (Ordinal은 순서로 저장 --> 위험!)
     private EventStatus eventStatus = EventStatus.DRAFT; // 기본값은 DRAFT로 설정
 
+    // 단방향 관계 매핑
     @ManyToOne
     private Account manager;
 

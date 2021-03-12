@@ -17,7 +17,7 @@ public class Account {
 
     private String password;
 
-    @ElementCollection(fetch = FetchType.EAGER) // 여러 개의 Enum을 가질 수 있음
+    @ElementCollection(fetch = FetchType.EAGER) // 여러 개의 Enum을 가질 수 있음을 명시하기 위해 ElementCollection 선언
     @Enumerated(value = EnumType.STRING)
     private Set<AccountRole> roles;
 }
