@@ -32,7 +32,7 @@ public class ResourceServerConfig extends ResourceServerConfigurerAdapter {
                     .and()
                 .authorizeRequests()
                     .mvcMatchers(HttpMethod.GET, "/api/**")
-                        .anonymous() // get 요청의 api들은 anonymous 허용
+                        .permitAll() // get 요청의 api들은 허용,  anonymous로 설정하면 anonymous만 사용가능(인증을 하면 사용을 못한다.)
                     .anyRequest()
                         .authenticated() // 다른 요청들은 인증을 필요로 함.
                     .and()

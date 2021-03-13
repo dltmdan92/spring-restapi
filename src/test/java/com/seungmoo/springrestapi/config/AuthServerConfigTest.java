@@ -5,6 +5,7 @@ import com.seungmoo.springrestapi.accounts.AccountRole;
 import com.seungmoo.springrestapi.accounts.AccountService;
 import com.seungmoo.springrestapi.common.BaseControllerTest;
 import com.seungmoo.springrestapi.common.TestDescription;
+import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -33,7 +34,7 @@ public class AuthServerConfigTest extends BaseControllerTest {
                 .password(appProperties.getUserPassword())
                 .roles(Set.of(AccountRole.ADMIN, AccountRole.USER))
                 .build();
-        this.accountService.saveAccount(account);
+        //this.accountService.saveAccount(account);
 
         // oauth를 셋팅하면, /oauth/token 링크에서 access_token을 발급해준다.
         this.mockMvc.perform(post("/oauth/token")
