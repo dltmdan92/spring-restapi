@@ -8,6 +8,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.util.Set;
@@ -20,10 +21,13 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 class AccountServiceTest {
 
     @Autowired
-    UserDetailsService accountService;
+    AccountService accountService;
 
     @Autowired
     AccountRepository accountRepository;
+
+    @Autowired
+    PasswordEncoder passwordEncoder;
 
     @DisplayName("로그인 인증 성공 테스트")
     @Test
@@ -37,13 +41,18 @@ class AccountServiceTest {
                 .roles(Set.of(AccountRole.ADMIN, AccountRole.USER))
                 .build();
 
-        this.accountRepository.save(account);
+        // Account(회원) 객체를 바로 저장하는게 아니라
+        //this.accountRepository.save(account);
+        // saveAccount로 저장 (passwordEncoder)
+        accountService.saveAccount(account);
 
         // When
         UserDetails userDetails = accountService.loadUserByUsername(username);
 
         // Then
-        assertThat(userDetails.getPassword()).isEqualTo(password);
+        //assertThat(userDetails.getPassword()).isEqualTo(password);
+        boolean matches = this.passwordEncoder.matches(password, userDetails.getPassword());
+        assertThat(matches).isTrue();
     }
 
     @DisplayName("로그인 인증 실패 테스트 - 잘못된 username")

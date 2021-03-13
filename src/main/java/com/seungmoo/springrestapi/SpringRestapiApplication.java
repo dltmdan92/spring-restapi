@@ -11,9 +11,4 @@ public class SpringRestapiApplication {
     public static void main(String[] args) {
         SpringApplication.run(SpringRestapiApplication.class, args);
     }
-
-    @Bean
-    public ModelMapper modelMapper() {
-        return new ModelMapper();
-    }
 }
