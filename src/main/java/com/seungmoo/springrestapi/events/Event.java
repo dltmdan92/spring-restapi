@@ -1,6 +1,8 @@
 package com.seungmoo.springrestapi.events;
 
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.seungmoo.springrestapi.accounts.Account;
+import com.seungmoo.springrestapi.accounts.AccountSerializer;
 import lombok.*;
 import org.springframework.hateoas.RepresentationModel;
 
@@ -43,6 +45,7 @@ public class Event {
 
     // 단방향 관계 매핑
     @ManyToOne
+    @JsonSerialize(using = AccountSerializer.class) // Event를 Serialization을 할 때는 Account Serializer를 쓰도록 한다.
     private Account manager;
 
     public void update() {
