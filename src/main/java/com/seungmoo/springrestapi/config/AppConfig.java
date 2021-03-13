@@ -36,7 +36,7 @@ public class AppConfig {
      * 앱이 구동될 때, 자동으로 User 하나 만들어줌
      * @return
      */
-    @Bean
+    //@Bean
     public ApplicationRunner applicationRunner() {
         return new ApplicationRunner() {
             @Autowired

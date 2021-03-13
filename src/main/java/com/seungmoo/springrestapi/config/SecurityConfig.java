@@ -47,6 +47,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     /**
      * AuthorizationServer, ResourceServer에서 AuthenticationManager를 참조할 수 있도록
      * AuthenticationManagerBean을 선언해준다. Bean으로 노출 해준다.
+     * AuthenticationManager --> 유저 인증 정보를 가지고 있음.
      * @return
      * @throws Exception
      */
@@ -82,11 +83,12 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     // 그러므로 상단에서 Filter를 선적용해준다.
     @Override
     protected void configure(HttpSecurity http) throws Exception {
-        /*http.authorizeRequests()
+        http.authorizeRequests()
                 .mvcMatchers("/docs/index.html").anonymous()
-                .requestMatchers(PathRequest.toStaticResources().atCommonLocations()).anonymous();*/
+                .requestMatchers(PathRequest.toStaticResources().atCommonLocations()).anonymous();
         // 위의 정책들 적용된 후에, FilterChain을 타게 된다.
 
+        /*
         http
             .anonymous()
                 .and()
@@ -94,6 +96,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .and()
             .authorizeRequests()
                 .mvcMatchers(HttpMethod.GET, "/api/**").authenticated()
-                .anyRequest().authenticated(); // 그외 나머지는 인증이 필요하다.
+                .anyRequest().authenticated(); // 그외 나머지는 인증이 필요하다.*/
     }
 }
