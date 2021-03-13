@@ -302,6 +302,35 @@ public class EventControllerTestNonSlicing extends BaseControllerTest {
                 .andDo(document("query-events"));
     }
 
+    /**
+     * 페이징 처리된 list 조회 + list 의 각 요소들의 self _link 받기
+     * @throws Exception
+     */
+    @Test
+    @TestDescription("30개의 이벤트를 10개씩 두번째 페이지 조회하기 + 인증정보 받기")
+    public void queryEventsWithAuthentication() throws Exception {
+        // Given
+        IntStream.range(0, 30).forEach(this::generateEvent);
+        // When
+        this.mockMvc.perform(get("/api/events")
+                .header(HttpHeaders.AUTHORIZATION, getBearToken())
+                .param("page", "1")
+                .param("size", "10")
+                .param("sort", "name,DESC"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("page").exists())
+                .andExpect(jsonPath("_embedded.eventList[0]._links.self").exists())
+                .andExpect(jsonPath("_links.self").exists())
+                .andExpect(jsonPath("_links.profile").exists())
+                .andExpect(jsonPath("_links.create-event").exists())
+                // query-events 디렉토리 하위로 문서화 adoc 파일 생성
+                // 자세한 문서화는 생략 함.
+                // 자세한 문서화 참고 : createEvent 메서드 참고
+                .andDo(document("query-events"));
+    }
+
+
     private Event generateEvent(int i) {
         Event event = Event.builder()
                 .name("event" + i)

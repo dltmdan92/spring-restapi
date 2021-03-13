@@ -33,7 +33,9 @@ public class AccountService implements UserDetailsService {
         // Account -> UserDetails로 변환
 
         // UserDetails의 구현체 중 User 객체를 통해 편리하게 계정 객체를 만들 수 있다.
-        return new User(account.getEmail(), account.getPassword(), authorities(account.getRoles()));
+        //return new User(account.getEmail(), account.getPassword(), authorities(account.getRoles()));
+        // user를 상속받는 AccountAdapeter를 리턴하고, Controller에서는 이제 Account를 받을 수 있게 된다.
+        return new AccountAdapter(account);
     }
 
     private Collection<? extends GrantedAuthority> authorities(Set<AccountRole> roles) {

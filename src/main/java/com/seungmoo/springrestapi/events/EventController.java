@@ -1,5 +1,8 @@
 package com.seungmoo.springrestapi.events;
 
+import com.seungmoo.springrestapi.accounts.Account;
+import com.seungmoo.springrestapi.accounts.AccountAdapter;
+import com.seungmoo.springrestapi.accounts.CurrentUser;
 import com.seungmoo.springrestapi.index.IndexController;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -11,7 +14,12 @@ import org.springframework.hateoas.Link;
 import org.springframework.hateoas.MediaTypes;
 import org.springframework.hateoas.PagedModel;
 import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.stereotype.Controller;
 import org.springframework.validation.Errors;
 import org.springframework.web.bind.annotation.*;
@@ -67,7 +75,11 @@ public class EventController {
      * @return
      */
     @PostMapping
-    public ResponseEntity<?> createEvent(@RequestBody @Valid EventDto eventDto, Errors errors) {
+    public ResponseEntity<?> createEvent(@RequestBody @Valid EventDto eventDto,
+                                         Errors errors,
+                                         @CurrentUser Account currentUser) {
+        // SecurityContextHolder의 authentication을 꺼내서 현재 사용자 정보를 알아 낼 수 있다.
+        //Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         // @Valid에서 발생한 Error의 결과가 Errors로 넘겨진다.
         if (errors.hasErrors()) {
@@ -82,6 +94,7 @@ public class EventController {
         // EventDto 객체를 --> Event 객체로 옮겨보자 (ModelMapper를 통해 편하게 사용)
         Event event = modelMapper.map(eventDto, Event.class);
         event.update(); // 유/무료 갱신, 원래는 Service 쪽으로 로직 위임하는게 좋다.
+        event.setManager(currentUser);
         Event newEvent = this.eventRepository.save(event);
         WebMvcLinkBuilder selfLinkBuilder =  linkTo(EventController.class).slash(newEvent.getId());
         URI createdUri = linkTo(EventController.class).slash(newEvent.getId()).toUri();
@@ -107,18 +120,32 @@ public class EventController {
      * @return
      */
     @GetMapping
-    public ResponseEntity<?> queryEvents(Pageable pageable, PagedResourcesAssembler<Event> assembler) {
+    public ResponseEntity<?> queryEvents(Pageable pageable,
+                                         PagedResourcesAssembler<Event> assembler,
+                                         // Spring Security의 @AuthenticationPrincipal 을 통해서 바로 User를 주입 받을 수 있다.
+                                         //@AuthenticationPrincipal AccountAdapter currentAccountAdapter
+                                         // spring의 expression을 통해 Account를 그냥 직접 받자
+                                         @CurrentUser Account account
+    ) {
+        // @AuthenticationPrincipal으로 해당 로직 대체
+        /*Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        User principal = (User) authentication.getPrincipal();*/
+
         // 페이징 처리
         Page<Event> page = this.eventRepository.findAll(pageable);
         PagedModel<EntityModel<Event>> model = assembler.toModel(page,
                 // list에서 각각의 event에 대한 self _link도 추가한다.
                 e -> EntityModel.of(e).add(linkTo(EventController.class).slash(e.getId()).withSelfRel()));
         model.add(Link.of("/docs/index.html#resources-events-list").withRel("profile"));
+        if (account != null) {
+            model.add(linkTo(EventController.class).withRel("create-event"));
+        }
         return ResponseEntity.ok(model);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getEvent(@PathVariable Integer id) {
+    public ResponseEntity<?> getEvent(@PathVariable Integer id,
+                                      @CurrentUser Account account) {
         Optional<Event> optionalEvent = this.eventRepository.findById(id);
         if (optionalEvent.isEmpty()) {
             return ResponseEntity.notFound().build();
@@ -127,13 +154,17 @@ public class EventController {
         EntityModel<Event> eventEntityModel = EntityModel.of(event, linkTo(EventController.class).slash(event.getId()).withSelfRel());
         // profile에 대한 링크는 asciidoc의 index.adoc을 참고하도록 하자.
         eventEntityModel.add(Link.of("/docs/index.html#resources-events-get").withRel("profile"));
+        if (event.getManager().equals(account)) {
+            eventEntityModel.add(linkTo(EventController.class).slash(event.getId()).withRel("update-event"));
+        }
         return ResponseEntity.ok(eventEntityModel);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<?> updateEvent(@PathVariable Integer id,
                                          @RequestBody @Valid EventDto eventDto,
-                                         Errors errors) {
+                                         Errors errors,
+                                         @CurrentUser Account account) {
         Optional<Event> optionalEvent = this.eventRepository.findById(id);
         if (optionalEvent.isEmpty()) {
             return ResponseEntity.notFound().build();
@@ -149,6 +180,9 @@ public class EventController {
 
         // 아래 부터는 update 로직 시작
         Event existingEvent = optionalEvent.get();
+        if (!existingEvent.getManager().equals(account)) {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        }
         this.modelMapper.map(eventDto, existingEvent); // eventDto를 existingEvent로 부어 준다. from -> to
         Event savedEvent = this.eventRepository.save(existingEvent);
 
