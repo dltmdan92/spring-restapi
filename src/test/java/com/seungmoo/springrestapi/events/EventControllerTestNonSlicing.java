@@ -1,15 +1,25 @@
 package com.seungmoo.springrestapi.events;
 
+import com.seungmoo.springrestapi.accounts.Account;
+import com.seungmoo.springrestapi.accounts.AccountRepository;
+import com.seungmoo.springrestapi.accounts.AccountRole;
+import com.seungmoo.springrestapi.accounts.AccountService;
 import com.seungmoo.springrestapi.common.BaseControllerTest;
 import com.seungmoo.springrestapi.common.TestDescription;
+import com.seungmoo.springrestapi.config.AppProperties;
 import org.hamcrest.Matchers;
+import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.json.JacksonJsonParser;
 import org.springframework.hateoas.MediaTypes;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.test.web.servlet.ResultActions;
 
 import java.time.LocalDateTime;
+import java.util.Set;
 import java.util.stream.IntStream;
 
 import static org.springframework.restdocs.headers.HeaderDocumentation.*;
@@ -17,6 +27,7 @@ import static org.springframework.restdocs.hypermedia.HypermediaDocumentation.li
 import static org.springframework.restdocs.hypermedia.HypermediaDocumentation.links;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
 import static org.springframework.restdocs.payload.PayloadDocumentation.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -25,6 +36,24 @@ public class EventControllerTestNonSlicing extends BaseControllerTest {
 
     @Autowired
     EventRepository eventRepository;
+
+    @Autowired
+    AccountService accountService;
+
+    @Autowired
+    AccountRepository accountRepository;
+
+    @Autowired
+    AppProperties appProperties;
+
+    /**
+     * in memory DB 이지만, 테스트가 돌때는 서로 DB가 공유가 된다.
+     */
+    //@Before
+    public void setUp() {
+        eventRepository.deleteAll();
+        accountRepository.deleteAll();
+    }
 
     /**
      * 입력값 이외의 파라미터는 무시하는 테스트
@@ -51,6 +80,7 @@ public class EventControllerTestNonSlicing extends BaseControllerTest {
                 .build();
 
         mockMvc.perform(post("/api/events/")
+                .header(HttpHeaders.AUTHORIZATION, getBearToken())
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaTypes.HAL_JSON) // HyperText Application Language (HATEOAS, 링크 정의)
                 .content(objectMapper.writeValueAsString(event)) // event 요 객체를 문자열로 바꿔서 body에 넣어준다.
@@ -62,7 +92,7 @@ public class EventControllerTestNonSlicing extends BaseControllerTest {
                 .andExpect(header().string(HttpHeaders.CONTENT_TYPE, MediaTypes.HAL_JSON_VALUE))
                 .andExpect(jsonPath("id").value(Matchers.not(100)))
                 .andExpect(jsonPath("free").value(false))
-                .andExpect(jsonPath("offline").value(false))
+                .andExpect(jsonPath("offline").value(true))
                 .andExpect(jsonPath("eventStatus").value(EventStatus.DRAFT.toString()))
                 // Spring HATEOAS를 통해 CLient는 링크 정보를 받고, Link를 통해 다른 Status로 전이할 수 있다.
                 .andExpect(jsonPath("_links.self").exists())
@@ -98,7 +128,7 @@ public class EventControllerTestNonSlicing extends BaseControllerTest {
                                 headerWithName(HttpHeaders.LOCATION).description("location header"),
                                 headerWithName(HttpHeaders.CONTENT_TYPE).description("content type is hal+json type")
                         ),
-                        responseFields(
+                        relaxedResponseFields(
                                 // relaxedResponseFields : relaxed prefix를 붙여서 응답의 일부분만 문서화 한다.
                                 // 그냥 responseField를 쓰면 payload의 모든 부분을 문서화 하려고 함
                                 // 문서화 파일 형식 : adoc 파일 (ascii doctor)
@@ -129,6 +159,36 @@ public class EventControllerTestNonSlicing extends BaseControllerTest {
 
     }
 
+    private String getBearToken() throws Exception {
+        return "Bearer " + getAccessToken();
+    }
+
+    // 이렇게 AccessToken을 꺼낸다.
+    private String getAccessToken() throws Exception {
+        // Given
+        // Runner에서 이미 유저 만듬
+        /*
+        Account account = Account.builder()
+                .email(appProperties.getUserUsername())
+                .password(appProperties.getUserPassword())
+                .roles(Set.of(AccountRole.ADMIN, AccountRole.USER))
+                .build();
+        this.accountService.saveAccount(account);*/
+
+        // oauth를 셋팅하면, /oauth/token 링크에서 access_token을 발급해준다.
+        ResultActions perform = this.mockMvc.perform(post("/oauth/token")
+                // HEADER에 clientId, clientSecret를 넣어주고
+                .with(httpBasic(appProperties.getClientId(), appProperties.getClientSecret()))
+                // requestBody(param)에는 username, password, grant-type을 넣어준다.
+                .param("username", appProperties.getUserUsername())
+                .param("password", appProperties.getUserPassword())
+                .param("grant_type", "password"));
+        MockHttpServletResponse response = perform.andReturn().getResponse();
+        String content = response.getContentAsString();
+        JacksonJsonParser parser = new JacksonJsonParser();
+        return parser.parseMap(content).get("access_token").toString();
+    }
+
     /**
      * 입력값 이외 발생 시 Error를 발생시킨다. (프로퍼티에서 별도 설정)
      *
@@ -155,6 +215,7 @@ public class EventControllerTestNonSlicing extends BaseControllerTest {
                 .build();
 
         mockMvc.perform(post("/api/events")
+                .header(HttpHeaders.AUTHORIZATION, getBearToken())
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaTypes.HAL_JSON) // HyperText Application Language (HATEOAS, 링크 정의)
                 .content(objectMapper.writeValueAsString(event)) // event 요 객체를 문자열로 바꿔서 body에 넣어준다.
@@ -169,6 +230,7 @@ public class EventControllerTestNonSlicing extends BaseControllerTest {
         EventDto eventDto = EventDto.builder().build();
 
         this.mockMvc.perform(post("/api/events")
+                    .header(HttpHeaders.AUTHORIZATION, getBearToken())
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(this.objectMapper.writeValueAsString(eventDto)))
                 .andExpect(status().isBadRequest());
@@ -201,6 +263,7 @@ public class EventControllerTestNonSlicing extends BaseControllerTest {
                 .build();
 
         this.mockMvc.perform(post("/api/events")
+                .header(HttpHeaders.AUTHORIZATION, getBearToken())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(this.objectMapper.writeValueAsString(eventDto)))
                 .andDo(print())
@@ -300,6 +363,7 @@ public class EventControllerTestNonSlicing extends BaseControllerTest {
 
         // When & Then
         this.mockMvc.perform(put("/api/events/{id}", event.getId())
+                    .header(HttpHeaders.AUTHORIZATION, getBearToken())
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(this.objectMapper.writeValueAsString(eventDto)))
                 .andDo(print())
@@ -326,6 +390,7 @@ public class EventControllerTestNonSlicing extends BaseControllerTest {
 
         // When & Then
         this.mockMvc.perform(put("/api/events/{id}", event.getId())
+                    .header(HttpHeaders.AUTHORIZATION, getBearToken())
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(this.objectMapper.writeValueAsString(eventDto)))
                 .andDo(print())
@@ -346,6 +411,7 @@ public class EventControllerTestNonSlicing extends BaseControllerTest {
 
         // When & Then
         this.mockMvc.perform(put("/api/events/{id}", event.getId())
+                .header(HttpHeaders.AUTHORIZATION, getBearToken())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(this.objectMapper.writeValueAsString(eventDto)))
                 .andDo(print())
@@ -366,6 +432,7 @@ public class EventControllerTestNonSlicing extends BaseControllerTest {
 
         // When & Then
         this.mockMvc.perform(put("/api/events/{id}", "12341")
+                .header(HttpHeaders.AUTHORIZATION, getBearToken())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(this.objectMapper.writeValueAsString(eventDto)))
                 .andDo(print())

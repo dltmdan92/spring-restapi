@@ -28,18 +28,26 @@ public class AuthServerConfig extends AuthorizationServerConfigurerAdapter {
     @Autowired
     TokenStore tokenStore;
 
+    @Autowired
+    AppProperties appProperties;
+
     @Override
     public void configure(AuthorizationServerSecurityConfigurer security) throws Exception {
         // password 확인용 encoder
         security.passwordEncoder(passwordEncoder);
     }
 
+    /**
+     * 클라이언트 정보
+     * @param clients
+     * @throws Exception
+     */
     @Override
     public void configure(ClientDetailsServiceConfigurer clients) throws Exception {
         // 가장 이상적인 것은 inMemory 보다는 jdbc 통해서 DB에서 토큰 관리하는게 좋다.
         clients.inMemory()
                 // clientId : 애플리케이션의 public 한 ID
-                .withClient("myApp")
+                .withClient(appProperties.getClientId())
                 // 지원하는 Grant Type은 password / refresh_token 타입 총 두개 이다.
                 // refresh_token 은 auth token을 발급받을 때 refresh_token도 같이 발급해주는데
                 // 이 refresh_token을 갖고 새로운 access_token을 발급 받는 타입이다.
@@ -47,7 +55,7 @@ public class AuthServerConfig extends AuthorizationServerConfigurerAdapter {
                 .scopes("read", "write")
                 // 여기서 pass 값은 client가 confidential client 인 경우 -> (각 서버에서 run하는 webapp 등)
                 // 본서버에 접근하기 위해 서로 secret한 값을 공유한다.
-                .secret(this.passwordEncoder.encode("pass"))
+                .secret(this.passwordEncoder.encode(appProperties.getClientSecret()))
                 .accessTokenValiditySeconds(10 * 60)
                 .refreshTokenValiditySeconds(6 * 10 * 60);
     }

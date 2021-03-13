@@ -36,20 +36,31 @@ public class AppConfig {
      * 앱이 구동될 때, 자동으로 User 하나 만들어줌
      * @return
      */
-    //@Bean
+    @Bean
     public ApplicationRunner applicationRunner() {
         return new ApplicationRunner() {
             @Autowired
             AccountService accountService;
 
+            @Autowired
+            AppProperties appProperties;
+
             @Override
             public void run(ApplicationArguments args) throws Exception {
-                Account seungmoo = Account.builder()
-                        .email("seungmoo@gmail.com")
-                        .password("seungmoo")
+                Account admin = Account.builder()
+                        .email(appProperties.getAdminUsername())
+                        .password(appProperties.getAdminPassword())
                         .roles(Set.of(AccountRole.ADMIN, AccountRole.USER))
                         .build();
-                accountService.saveAccount(seungmoo);
+
+                Account user = Account.builder()
+                        .email(appProperties.getUserUsername())
+                        .password(appProperties.getUserPassword())
+                        .roles(Set.of(AccountRole.USER))
+                        .build();
+
+                accountService.saveAccount(admin);
+                accountService.saveAccount(user);
             }
         };
     }

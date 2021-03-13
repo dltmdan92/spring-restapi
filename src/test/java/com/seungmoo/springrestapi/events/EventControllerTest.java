@@ -1,7 +1,9 @@
 package com.seungmoo.springrestapi.events;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.seungmoo.springrestapi.accounts.AccountRepository;
 import org.hamcrest.Matchers;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
@@ -34,6 +36,9 @@ public class EventControllerTest {
 
     @Autowired
     ObjectMapper objectMapper;
+
+    @Autowired
+    AccountRepository accountRepository;
 
     @Test
     public void createEvent() throws Exception {
